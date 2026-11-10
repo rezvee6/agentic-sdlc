@@ -4,6 +4,8 @@ Markdown instructions that take coding agents through the whole lifecycle — re
 
 This README is for humans. Agents never need to read it.
 
+**Branch: `kiro`** — the shared core plus the Kiro CLI harness. Other harnesses live on other branches (`main` is Claude Code). The core (`AGENTS.md`, `LICENSE`, `docs/agents/`, `scripts/`, `.github/workflows/`) is changed only on `main`; CI opens a `sync/main-to-kiro` pull request to bring changes here, and fails any push or pull request that edits the core on this branch. Details: the "Keeping branches in sync" section of the README on `main`.
+
 ## How it keeps token use down
 
 - **One always-loaded file.** `AGENTS.md` (≤100 lines) holds task sizing, a load-on-demand table, the hard rules, and context discipline.
@@ -19,6 +21,8 @@ AGENTS.md                      always loaded: router + hard rules
 .kiroignore                    build output, lockfiles, secrets: unreadable to agents
 .kiro/agents/                  Kiro CLI agents: planner, implementer, reviewer, integrator, orchestrator
 .kiro/steering/                loads cpp.md / rust.md when matching source files are in play
+harness/check.sh               CI check for the Kiro agents (front matter, paths, permission coverage)
+scripts/, .github/workflows/   docs checks and branch sync (core: shared with every branch)
 docs/agents/
   00-workflow.md               phases, roles, gates, definition of done
   01-requirements.md           spec with testable acceptance criteria
