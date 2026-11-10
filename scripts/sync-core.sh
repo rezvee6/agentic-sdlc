@@ -34,6 +34,10 @@ fi
 
 if git diff --cached --quiet; then
   echo "$target: core already in sync with $SOURCE_BRANCH@$src_sha"
+  # A sync pull request left over from an earlier run is now redundant.
+  if [ "$(gh pr view "$head" --json state -q .state 2>/dev/null || true)" = OPEN ]; then
+    gh pr close "$head" --delete-branch --comment "Closing: \`$target\` already matches \`$SOURCE_BRANCH\`@\`$src_sha\`."
+  fi
   [ -z "$workflow_note" ] || exit 1
   exit 0
 fi
