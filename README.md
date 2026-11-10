@@ -16,9 +16,6 @@ This README is for humans. Agents never need to read it.
 
 ```
 AGENTS.md                      always loaded: router + hard rules
-.kiroignore                    build output, lockfiles, secrets: unreadable to agents
-.kiro/agents/                  Kiro CLI agents: planner, implementer, reviewer, integrator, orchestrator
-.kiro/steering/                loads cpp.md / rust.md when matching source files are in play
 docs/agents/
   00-workflow.md               phases, roles, gates, definition of done
   01-requirements.md           spec with testable acceptance criteria
@@ -42,60 +39,29 @@ docs/work/<id>/                created per task: the agents' working memory
 
 ## Install
 
-1. Copy `AGENTS.md`, `docs/agents/`, `.kiro/` and `.kiroignore` into the repository root.
+1. Copy `AGENTS.md` and `docs/agents/` into the repository root.
 2. Fill in the two `FILL IN` blocks in `AGENTS.md` (project summary, commands). Delete the language column and language doc you don't use.
 3. Make the commands real: CMake presets `dev` / `asan` / `tsan` / `release`, or the Cargo equivalents. Agents must be able to run each one verbatim.
 4. Put the enforcement in tooling: `.clang-format`, `.clang-tidy`, warning flags; `rustfmt.toml`, `[lints]`, `deny.toml`; CI stages as in `07-integration-release.md`.
-5. Add your generated-code directories to `.kiroignore`.
-6. Trim the shell rules in `.kiro/agents/*.md` to the commands you kept in step 2.
-7. Protect the main branch: CI required, human approval required.
+5. Add `build/`, `target/`, lockfiles and generated-code directories to your agent tool's ignore file.
+6. Protect the main branch: CI required, human approval required.
 
-## Kiro CLI
+## Harnesses
 
-Written for Kiro CLI V3 (`kiro-cli --version` ≥ 3.0.0), which reads the root `AGENTS.md` in every session, including custom-agent sessions.
+The core (`AGENTS.md` + `docs/agents/`) is harness-neutral. Harness-specific wiring lives on its own branch:
 
-| Piece | What it does |
-|---|---|
-| `AGENTS.md` | Always loaded. Routes to `docs/agents/*` on demand. |
-| `.kiro/agents/<role>.md` | One agent per role. Each exposes only the tools it needs, preloads its one phase doc, and carries its permissions. |
-| `.kiro/steering/lang-*.md` | `fileMatch` pointers: load `cpp.md` / `rust.md` when matching source files are in play. |
-| `.kiroignore` | Blocks reads and searches of build output, lockfiles and secrets. |
+| Branch | Harness | Adds |
+|---|---|---|
+| `main` | Claude Code | core only |
+| `kiro` | Kiro CLI V3 | role agents, an orchestrator, language steering, `.kiroignore` |
 
-```
-kiro-cli chat --agent planner          # start a session in a role
-/agent swap implementer                # switch role mid-session (prefer a fresh session)
-/agent list                            # confirm the five agents loaded
-kiro-cli chat --agent orchestrator     # run a task end to end (see below)
-kiro-cli chat --v3 --agent implementer --no-interactive "Implement T2 from docs/work/42/plan.md"
-```
-
-**Permissions.** Each agent pre-approves the commands in the `AGENTS.md` table and writes inside its remit; everything else prompts.
-
-- The implementer is prompted before editing lint, format, toolchain or CI config, `.kiro/`, `AGENTS.md` or `docs/agents/` (hard rule 2).
-- Force-push and `--no-verify` are denied for every agent that can commit (hard rule 8). The integrator cannot merge, tag, or push to `main`.
-- Planner and reviewer may write only under `docs/work/` without a prompt.
-- Pre-approving `cargo`, `cmake` and `ctest` lets build scripts and tests run unprompted. Remove those rules if you want to approve each run.
-- In headless runs a prompt becomes a denial, so anything not pre-approved fails rather than waits.
-
-**Independent review.** The implementer can hand off to `reviewer` as a sub-agent. Sub-agents don't see the parent conversation, which is the independence `06-review.md` asks for.
-
-**End to end.** `orchestrator` chains the four roles as sub-agents: it reads the state in `docs/work/<id>/`, runs the next step, and stops at each human checkpoint (spec approval, design approval, merge). Start it again with the task id to resume.
-
-- It has no write or shell tools of its own, so it can only delegate.
-- Kiro runs a sub-agent's tool call unprompted only if the parent allows it too, so the orchestrator carries the union of the role agents' allow rules. Each role's narrower rules still apply. If you change a role's rules, change the orchestrator's to match.
-- It costs more tokens than running roles by hand, because every step starts a cold sub-agent. Use it for unattended runs; run roles directly when you are at the keyboard.
-
-**Keep the docs out of `.kiro/steering/`.** Steering files without front matter load into every session; that would put all ~14k tokens of this kit in every context. Only the two `fileMatch` pointers live there.
-
-**Specs.** Kiro's `/spec` workflow covers the same ground as phases 1–3. Use one or the other per task, not both.
-
-**Kiro CLI 2.x.** `AGENTS.md` and the docs work unchanged. The agent files use the V3 format (Markdown, `permissions`), and 2.x does not auto-load `fileMatch` steering, so there the `AGENTS.md` table does the routing.
+Changes to the core land on `main` first, then merge into each harness branch.
 
 **Other tools.** If a tool looks for a differently named instruction file, symlink that name to `AGENTS.md` so there is one source of truth.
 
 ## Running it
 
-One role per session (`kiro-cli chat --agent <role>`). Start each with a one-line prompt:
+One role per session. Start each with a one-line prompt:
 
 | Role | Prompt |
 |---|---|
@@ -105,7 +71,6 @@ One role per session (`kiro-cli chat --agent <role>`). Start each with a one-lin
 | Implementer | "Implement T`<n>` from `docs/work/<id>/plan.md`. Read `handoff.md` first." |
 | Reviewer | "Review branch `<b>` against `docs/work/<id>/spec.md`." |
 | Integrator | "Open the PR for `<id>`." |
-| Orchestrator | "Task `<id>`: `<request>`." — or "Resume `<id>`." |
 
 You approve the spec, the design, anything under hard rule 5, the merge, and the release. Everything in between runs unattended.
 
