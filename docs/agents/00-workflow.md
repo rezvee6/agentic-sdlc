@@ -28,6 +28,7 @@ One role per session. A role change is a context reset.
 | Implementer | one plan task and the files it names | code, tests, plan ticks | change spec or plan scope silently |
 | Reviewer | spec, diff, gate output | `review.md` | see the implementer's conversation; fix the code |
 | Integrator | `review.md`, CI output | PR, changelog | merge without human approval |
+| Orchestrator (optional) | `handoff.md`, artifact status lines | nothing — delegates each step to a role in its own context | do a role's work itself; skip a human checkpoint |
 
 Reviewer independence is the point: a reviewer that shares the author's context shares the author's blind spots.
 

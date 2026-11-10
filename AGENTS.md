@@ -46,6 +46,8 @@ Between two sizes, pick the larger. State the size before starting. Re-size if t
 | Bug fix, refactor, dependency update | `08-maintenance.md` |
 | Numeric perf budget, hot path, regression | `performance.md` |
 | External input, FFI, secrets, new dependency | `security.md` |
+| Cross-compiling, bare-metal / `no_std`, on-target tests, safety-related target | `embedded.md` |
+| Adding logging, metrics, tracing, diagnostics | `observability.md` |
 | Long session; spawning subagents | `context-budget.md` |
 
 ## 3. Hard rules

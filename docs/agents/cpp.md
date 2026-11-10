@@ -76,6 +76,6 @@ Signed overflow · out-of-bounds access · dangling pointer/reference/view · it
 - "Fixing" a sanitizer report by suppressing it.
 - Building `all` when one target would do.
 
-## Constrained or safety-related targets (only if the project says so)
+## Embedded, cross-compiled or safety-related targets
 
-No heap after initialisation · no exceptions or RTTI · fixed-capacity containers · bounded loops and recursion · fixed-width integers · follow the project's coding standard (e.g. MISRA C++, AUTOSAR, CERT) and never suppress its checker without a recorded deviation.
+Load `embedded.md`.

@@ -17,7 +17,7 @@ This README is for humans. Agents never need to read it.
 ```
 AGENTS.md                      always loaded: router + hard rules
 .kiroignore                    build output, lockfiles, secrets: unreadable to agents
-.kiro/agents/                  Kiro CLI role agents: planner, implementer, reviewer, integrator
+.kiro/agents/                  Kiro CLI agents: planner, implementer, reviewer, integrator, orchestrator
 .kiro/steering/                loads cpp.md / rust.md when matching source files are in play
 docs/agents/
   00-workflow.md               phases, roles, gates, definition of done
@@ -33,6 +33,8 @@ docs/agents/
   cpp.md / rust.md             language rules and agent pitfalls
   performance.md               measure-first method, tools, build settings
   security.md                  code, dependencies, agent operating rules
+  embedded.md                  cross-compilation, freestanding C++, no_std Rust, on-target testing
+  observability.md             log levels, structured logs, metrics, tracing
   context-budget.md            reading, tool output, sessions, subagents
   templates/                   spec, design, adr, plan, handoff, review, pr
 docs/work/<id>/                created per task: the agents' working memory
@@ -62,7 +64,8 @@ Written for Kiro CLI V3 (`kiro-cli --version` ≥ 3.0.0), which reads the root `
 ```
 kiro-cli chat --agent planner          # start a session in a role
 /agent swap implementer                # switch role mid-session (prefer a fresh session)
-/agent list                            # confirm the four agents loaded
+/agent list                            # confirm the five agents loaded
+kiro-cli chat --agent orchestrator     # run a task end to end (see below)
 kiro-cli chat --v3 --agent implementer --no-interactive "Implement T2 from docs/work/42/plan.md"
 ```
 
@@ -76,7 +79,13 @@ kiro-cli chat --v3 --agent implementer --no-interactive "Implement T2 from docs/
 
 **Independent review.** The implementer can hand off to `reviewer` as a sub-agent. Sub-agents don't see the parent conversation, which is the independence `06-review.md` asks for.
 
-**Keep the docs out of `.kiro/steering/`.** Steering files without front matter load into every session; that would put all ~12k tokens of this kit in every context. Only the two `fileMatch` pointers live there.
+**End to end.** `orchestrator` chains the four roles as sub-agents: it reads the state in `docs/work/<id>/`, runs the next step, and stops at each human checkpoint (spec approval, design approval, merge). Start it again with the task id to resume.
+
+- It has no write or shell tools of its own, so it can only delegate.
+- Kiro runs a sub-agent's tool call unprompted only if the parent allows it too, so the orchestrator carries the union of the role agents' allow rules. Each role's narrower rules still apply. If you change a role's rules, change the orchestrator's to match.
+- It costs more tokens than running roles by hand, because every step starts a cold sub-agent. Use it for unattended runs; run roles directly when you are at the keyboard.
+
+**Keep the docs out of `.kiro/steering/`.** Steering files without front matter load into every session; that would put all ~14k tokens of this kit in every context. Only the two `fileMatch` pointers live there.
 
 **Specs.** Kiro's `/spec` workflow covers the same ground as phases 1–3. Use one or the other per task, not both.
 
@@ -96,6 +105,7 @@ One role per session (`kiro-cli chat --agent <role>`). Start each with a one-lin
 | Implementer | "Implement T`<n>` from `docs/work/<id>/plan.md`. Read `handoff.md` first." |
 | Reviewer | "Review branch `<b>` against `docs/work/<id>/spec.md`." |
 | Integrator | "Open the PR for `<id>`." |
+| Orchestrator | "Task `<id>`: `<request>`." — or "Resume `<id>`." |
 
 You approve the spec, the design, anything under hard rule 5, the merge, and the release. Everything in between runs unattended.
 
@@ -105,3 +115,7 @@ You approve the spec, the design, anything under hard rule 5, the merge, and the
 - When an agent repeats a mistake, fix it in tooling first, a specific doc second, `AGENTS.md` last (see `08-maintenance.md`).
 - Size limits (200 lines per task, 400 per PR, three strikes) are starting points; adjust them to your codebase.
 - For safety-related code, add your coding standard's checker to the gate and name the standard in the `AGENTS.md` project block.
+
+## Licence
+
+MIT — see `LICENSE`.

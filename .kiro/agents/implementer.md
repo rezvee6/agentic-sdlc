@@ -39,6 +39,8 @@ permissions:
         - "cargo clippy*"
         - "cargo fmt*"
         - "cargo bench*"
+        - "cargo miri test*"
+        - "cargo +nightly miri test*"
         - "git add *"
         - "git commit *"
         - "git switch *"

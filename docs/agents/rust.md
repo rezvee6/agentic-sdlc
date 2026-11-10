@@ -62,6 +62,7 @@ Load when: writing or reviewing Rust. Edition and MSRV are in `Cargo.toml` (`edi
 - Fewest dependencies possible; `default-features = false`, then enable what's used. `cargo deny` and `cargo audit` in CI. Commit `Cargo.lock`.
 - Large projects: a workspace of small crates (parallel builds, enforced boundaries). Features are additive, never mutually exclusive.
 - `rust-toolchain.toml` pins the toolchain; CI also builds on the MSRV.
+- `no_std`, cross-compiled or safety-related target → load `embedded.md`.
 
 ## Agent pitfalls
 

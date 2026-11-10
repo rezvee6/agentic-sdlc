@@ -18,6 +18,8 @@ permissions:
         - "cargo test*"
         - "cargo clippy*"
         - "cargo fmt --check*"
+        - "cargo miri test*"
+        - "cargo +nightly miri test*"
         - "git diff*"
         - "git status*"
         - "git log*"

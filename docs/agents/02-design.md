@@ -15,6 +15,7 @@ Load when: L-sized work. Also load `principles.md`. Templates: `templates/design
    - **Data layout and allocation** on hot paths — container choice, sizes, where allocation happens.
    - **Failure modes** — resource exhaustion, partial writes, timeouts, restart behaviour.
    - **Test seams** — where fakes plug in (clock, I/O, network) without touching production logic.
+   - **Observability** — what is logged and measured, at what level (`observability.md`).
 5. Write an ADR for each decision that is costly to reverse: new dependency, wire/file format, public API shape, threading model, error strategy, `unsafe`/FFI boundary.
 6. Get human approval.
 
