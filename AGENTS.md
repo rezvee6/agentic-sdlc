@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Always loaded. Budget: ≤100 lines. Everything else is in `docs/agents/` — load a file only when its trigger applies, once per session.
+Always loaded. Budget: ≤100 lines. Everything else is in `docs/agents/` — load a file only when its trigger applies, once per session, and skip any that is already in your context.
 
 ## Project
 <!-- FILL IN (≤6 lines): what this builds, target platforms, language standard / edition, build system, top-level directory layout. -->
@@ -62,8 +62,8 @@ Between two sizes, pick the larger. State the size before starting. Re-size if t
 
 ## 4. Context discipline (always on; detail in `context-budget.md`)
 
-- Search before reading (`rg -n`); read ranges, not files; don't re-read what you just wrote.
-- Never open `build/`, `target/`, lockfiles, vendored or generated code.
+- Search before reading (your search tool, or `rg -n`); read ranges, not files; don't re-read what you just wrote.
+- Never open `build/`, `target/`, lockfiles, or generated code. In vendored code, read only the public header or signature you need.
 - Quiet flags on every command and capped output: `| head -n 40` for compile errors, `| tail -n 30` for test runs.
 - Fix the first compiler error, rebuild, repeat. Targeted tests in the loop; full suite once at the gate.
 - Edit in place with small hunks. Don't narrate code or restate diffs.

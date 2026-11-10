@@ -16,6 +16,9 @@ This README is for humans. Agents never need to read it.
 
 ```
 AGENTS.md                      always loaded: router + hard rules
+.kiroignore                    build output, lockfiles, secrets: unreadable to agents
+.kiro/agents/                  Kiro CLI role agents: planner, implementer, reviewer, integrator
+.kiro/steering/                loads cpp.md / rust.md when matching source files are in play
 docs/agents/
   00-workflow.md               phases, roles, gates, definition of done
   01-requirements.md           spec with testable acceptance criteria
@@ -37,17 +40,53 @@ docs/work/<id>/                created per task: the agents' working memory
 
 ## Install
 
-1. Copy `AGENTS.md` and `docs/agents/` into the repository root.
+1. Copy `AGENTS.md`, `docs/agents/`, `.kiro/` and `.kiroignore` into the repository root.
 2. Fill in the two `FILL IN` blocks in `AGENTS.md` (project summary, commands). Delete the language column and language doc you don't use.
 3. Make the commands real: CMake presets `dev` / `asan` / `tsan` / `release`, or the Cargo equivalents. Agents must be able to run each one verbatim.
 4. Put the enforcement in tooling: `.clang-format`, `.clang-tidy`, warning flags; `rustfmt.toml`, `[lints]`, `deny.toml`; CI stages as in `07-integration-release.md`.
-5. Tell your agent tool to ignore `build/`, `target/`, vendored and generated code.
-6. If your agent tool looks for a differently named instruction file, symlink that name to `AGENTS.md` so there is one source of truth.
+5. Add your generated-code directories to `.kiroignore`.
+6. Trim the shell rules in `.kiro/agents/*.md` to the commands you kept in step 2.
 7. Protect the main branch: CI required, human approval required.
+
+## Kiro CLI
+
+Written for Kiro CLI V3 (`kiro-cli --version` ≥ 3.0.0), which reads the root `AGENTS.md` in every session, including custom-agent sessions.
+
+| Piece | What it does |
+|---|---|
+| `AGENTS.md` | Always loaded. Routes to `docs/agents/*` on demand. |
+| `.kiro/agents/<role>.md` | One agent per role. Each exposes only the tools it needs, preloads its one phase doc, and carries its permissions. |
+| `.kiro/steering/lang-*.md` | `fileMatch` pointers: load `cpp.md` / `rust.md` when matching source files are in play. |
+| `.kiroignore` | Blocks reads and searches of build output, lockfiles and secrets. |
+
+```
+kiro-cli chat --agent planner          # start a session in a role
+/agent swap implementer                # switch role mid-session (prefer a fresh session)
+/agent list                            # confirm the four agents loaded
+kiro-cli chat --v3 --agent implementer --no-interactive "Implement T2 from docs/work/42/plan.md"
+```
+
+**Permissions.** Each agent pre-approves the commands in the `AGENTS.md` table and writes inside its remit; everything else prompts.
+
+- The implementer is prompted before editing lint, format, toolchain or CI config, `.kiro/`, `AGENTS.md` or `docs/agents/` (hard rule 2).
+- Force-push and `--no-verify` are denied for every agent that can commit (hard rule 8). The integrator cannot merge, tag, or push to `main`.
+- Planner and reviewer may write only under `docs/work/` without a prompt.
+- Pre-approving `cargo`, `cmake` and `ctest` lets build scripts and tests run unprompted. Remove those rules if you want to approve each run.
+- In headless runs a prompt becomes a denial, so anything not pre-approved fails rather than waits.
+
+**Independent review.** The implementer can hand off to `reviewer` as a sub-agent. Sub-agents don't see the parent conversation, which is the independence `06-review.md` asks for.
+
+**Keep the docs out of `.kiro/steering/`.** Steering files without front matter load into every session; that would put all ~12k tokens of this kit in every context. Only the two `fileMatch` pointers live there.
+
+**Specs.** Kiro's `/spec` workflow covers the same ground as phases 1–3. Use one or the other per task, not both.
+
+**Kiro CLI 2.x.** `AGENTS.md` and the docs work unchanged. The agent files use the V3 format (Markdown, `permissions`), and 2.x does not auto-load `fileMatch` steering, so there the `AGENTS.md` table does the routing.
+
+**Other tools.** If a tool looks for a differently named instruction file, symlink that name to `AGENTS.md` so there is one source of truth.
 
 ## Running it
 
-One role per session. Start each with a one-line prompt:
+One role per session (`kiro-cli chat --agent <role>`). Start each with a one-line prompt:
 
 | Role | Prompt |
 |---|---|
