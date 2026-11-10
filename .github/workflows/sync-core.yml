@@ -1,0 +1,41 @@
+name: sync-core
+
+# When the core changes on main, open (or update) a pull request into each
+# harness branch that copies the core across. Harness files are untouched.
+on:
+  push:
+    branches: [main]
+    paths: [AGENTS.md, LICENSE, "docs/agents/**", "scripts/**", ".github/workflows/**"]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1" # weekly drift check
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-core
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Add a branch here when a new harness gets one.
+        branch: [kiro]
+    # Optional secret SYNC_TOKEN: a fine-grained token with contents,
+    # pull-requests and workflows write. Without it, workflow files are flagged
+    # instead of synced, and checks don't run on the sync pull request
+    # (GitHub doesn't trigger workflows from its own token's events).
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN || github.token }}
+      - run: scripts/sync-core.sh "${{ matrix.branch }}"
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
+          SYNC_WORKFLOWS: ${{ secrets.SYNC_TOKEN != '' && '1' || '0' }}

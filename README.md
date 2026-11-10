@@ -55,7 +55,26 @@ The core (`AGENTS.md` + `docs/agents/`) is harness-neutral. Harness-specific wir
 | `main` | Claude Code | core only |
 | `kiro` | Kiro CLI V3 | role agents, an orchestrator, language steering, `.kiroignore` |
 
-Changes to the core land on `main` first, then merge into each harness branch.
+Make core changes on `main` only. CI copies them to each harness branch.
+
+### Keeping branches in sync
+
+The **core** is `AGENTS.md`, `LICENSE`, `docs/agents/`, `scripts/` and `.github/workflows/`, and it is identical on every branch. Everything else (`README.md`, `harness/`, the tool's own folders) belongs to its branch.
+
+| Workflow | Runs on | Does |
+|---|---|---|
+| `checks` | every push and pull request | `scripts/check-docs.sh` (line budgets, routing table matches the docs, links resolve, tables well formed). Off `main`, also fails if the core differs from `main`. On `main`, fails if another harness's files appear. Runs `harness/check.sh` when a branch has one. |
+| `sync-core` | push to `main` touching the core; weekly; manual | Copies the core from `main` onto each harness branch and opens or updates a `sync/main-to-<branch>` pull request. Harness files are never touched, so no merge conflicts. |
+
+One-time setup:
+
+1. **Settings → Actions → General → Workflow permissions:** tick "Allow GitHub Actions to create and approve pull requests".
+2. Optional, recommended: add a repository secret `SYNC_TOKEN`, a fine-grained token for this repo with Contents, Pull requests and Workflows set to read and write. Without it:
+   - Changes to `.github/workflows/` are flagged in the sync pull request but not copied; copy them across by hand.
+   - Checks don't run on the sync pull request, because GitHub doesn't trigger workflows from its own token.
+3. New harness branch: create it from `main`, add its files, and add its name to the `matrix.branch` list in `sync-core.yml`.
+
+Run the checks locally: `scripts/check-docs.sh`, and on a harness branch `scripts/check-core-parity.sh`.
 
 **Other tools.** If a tool looks for a differently named instruction file, symlink that name to `AGENTS.md` so there is one source of truth.
 

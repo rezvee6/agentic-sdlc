@@ -1,0 +1,41 @@
+name: checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/check-docs.sh
+
+  branch:
+    runs-on: ubuntu-latest
+    env:
+      # The branch being pushed to, or the branch a pull request targets.
+      BRANCH: ${{ github.base_ref || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Core matches main
+        if: env.BRANCH != 'main' && !startsWith(env.BRANCH, 'sync/')
+        run: scripts/check-core-parity.sh
+
+      - name: Main carries no other harness
+        if: env.BRANCH == 'main'
+        run: |
+          stray=$(ls -d .kiro .kiroignore harness 2>/dev/null || true)
+          if [ -n "$stray" ]; then
+            echo "::error::Harness files belong on their own branch, not main: $stray"
+            exit 1
+          fi
+
+      - name: Harness checks
+        if: hashFiles('harness/check.sh') != ''
+        run: harness/check.sh
