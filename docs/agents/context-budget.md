@@ -18,7 +18,7 @@ Tokens go on four things: instructions, reading, tool output, and your own writi
 - Outline a large file before opening it:
   `rg -n '^\s*(class|struct|enum|namespace|template|pub |fn |impl |trait |mod )' <file>`
 - Headers and trait definitions before implementations. Often the signature is all you need.
-- Never open `build/`, `target/`, lockfiles, generated code, binaries; the agent tool's ignore file (`.kiroignore`) enforces this.
+- Never open `build/`, `target/`, lockfiles, generated code, binaries; put them in the agent tool's ignore file.
 - Vendored code (`third_party/`, `vendor/`): only the public header or signature you need, never a browse.
 - Don't re-read a file you read or edited this session unless something else changed it.
 - `git diff --stat` before `git diff`; `git log --oneline -n 10`, not `git log`.
